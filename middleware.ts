@@ -1,12 +1,14 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
-const BASE = '/apps/yoracle'
-
+// Public routes — matched against the path as seen by middleware.
+// Pages include the basePath prefix (/apps/yoracle/...).
+// API routes do NOT include the basePath prefix in middleware (/api/...).
 const isPublic = createRouteMatcher([
-  `${BASE}/health`,
-  `${BASE}/sign-in(.*)`,
-  `${BASE}/sign-up(.*)`,
+  '/apps/yoracle/health',
+  '/apps/yoracle/sign-in(.*)',
+  '/apps/yoracle/sign-up(.*)',
+  '/health',
 ])
 
 export default clerkMiddleware((auth, req) => {
@@ -18,13 +20,10 @@ export default clerkMiddleware((auth, req) => {
 
 export const config = {
   matcher: [
-    /*
-     * Match all paths under /apps/yoracle EXCEPT:
-     *   - _next/static  (static assets)
-     *   - _next/image   (image optimisation)
-     *   - favicon.ico, sitemap.xml, robots.txt
-     *   - files with an extension (js, css, png, etc.)
-     */
-    '/apps/yoracle/((?!_next/static|_next/image|favicon\\.ico|sitemap\\.xml|robots\\.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff2?|ttf)).*)',
+    // Pages — Next.js middleware sees the full path including basePath for pages.
+    // Skip _next internals and static file extensions.
+    '/apps/yoracle/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|woff2?|ttf)).*)',
+    // API routes — middleware sees these WITHOUT the basePath prefix.
+    '/api/(.*)',
   ],
 }
