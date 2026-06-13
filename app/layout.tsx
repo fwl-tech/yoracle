@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import './globals.css'
 
-// All pages are auth-gated via Clerk. Force dynamic rendering so env vars
-// are resolved at request time rather than build time.
 export const dynamic = 'force-dynamic'
+
+const BASE = '/apps/yoracle'
 
 export const metadata: Metadata = {
   title: 'Yoracle — Business Intelligence',
@@ -13,7 +13,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      signInUrl={`${BASE}/sign-in`}
+      signUpUrl={`${BASE}/sign-up`}
+      signInFallbackRedirectUrl={`${BASE}/digest`}
+      signUpFallbackRedirectUrl={`${BASE}/onboarding`}
+    >
       <html lang="en">
         <body className="bg-gray-950 text-gray-100 antialiased">
           {children}
