@@ -2,11 +2,13 @@
 const nextConfig = {
   basePath: '/apps/yoracle',
   env: { NEXT_PUBLIC_BASE_PATH: '/apps/yoracle' },
-  // Preserve trailing slashes so Next.js doesn't redirect /apps/yoracle/ → /apps/yoracle.
-  // Without this, Railway's internal HTTP forwarding causes a http:// ↔ https:// loop
-  // via the nginx reverse proxy at hatchai.fairwaterlabs.com.
-  trailingSlash: true,
   experimental: {
+    // Railway terminates TLS at the edge and forwards HTTP to the container.
+    // Next.js generates absolute redirect URLs using the request scheme (http://),
+    // which causes an infinite loop with nginx's HTTP→HTTPS upgrade:
+    //   /apps/yoracle/  →308→  /apps/yoracle  →307→  http://.../apps/yoracle/  →loop
+    // Skipping the trailing-slash redirect breaks the loop while keeping all routes intact.
+    skipTrailingSlashRedirect: true,
     serverActions: { allowedOrigins: ['hatchai.fairwaterlabs.com'] },
   },
 }
