@@ -8,15 +8,12 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Connect repo and trigger Railway deploy
+      - name: Trigger Railway redeploy
         run: |
-          # Connect the GitHub repo as source for the service, then trigger a deploy
-          RESPONSE=$(curl -sf -X POST https://backboard.railway.app/graphql/v2 \
+          RESPONSE=$(curl -s -X POST https://backboard.railway.app/graphql/v2 \
             -H "Authorization: Bearer $RAILWAY_TOKEN" \
             -H "Content-Type: application/json" \
-            -d '{
-              "query": "mutation { serviceInstanceRedeploy(serviceId: \"'"$RAILWAY_SERVICE_ID"'\", environmentId: \"'"$RAILWAY_ENVIRONMENT_ID"'\") }"
-            }')
+            -d "{\"query\": \"mutation { serviceInstanceRedeploy(serviceId: \\\"$RAILWAY_SERVICE_ID\\\") }\"}")
           echo "Railway response: $RESPONSE"
           if echo "$RESPONSE" | grep -q '"errors"'; then
             echo "Deploy trigger failed"
@@ -26,4 +23,3 @@ jobs:
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
-          RAILWAY_ENVIRONMENT_ID: ${{ secrets.RAILWAY_ENVIRONMENT_ID }}
