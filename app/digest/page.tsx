@@ -21,11 +21,11 @@ function severityDot(s: Insight['severity']) {
 
 export default async function DigestPage() {
   const { userId } = await auth()
-  if (!userId) redirect(`${BASE}/sign-in`)
+  if (!userId) redirect('/sign-in')
 
   const db = getSupabaseClient()
   const { data: user } = await db.from('users').select('*').eq('clerk_user_id', userId).maybeSingle()
-  if (!user) redirect(`${BASE}/onboarding`)
+  if (!user) redirect('/onboarding')
 
   const today = new Date().toISOString().split('T')[0]
   const { data: raw } = await db
@@ -45,10 +45,10 @@ export default async function DigestPage() {
           <span className="font-semibold text-white">Yoracle</span>
         </div>
         <div className="flex items-center gap-4 text-sm">
-          <Link href={`${BASE}/dashboards`} className="text-gray-400 hover:text-white transition">Dashboards</Link>
-          <Link href={`${BASE}/chat`} className="text-gray-400 hover:text-white transition">Ask AI</Link>
-          <Link href={`${BASE}/connectors`} className="text-gray-400 hover:text-white transition">Connectors</Link>
-          <Link href={`${BASE}/settings`} className="text-gray-400 hover:text-white transition">Settings</Link>
+          <Link href="/dashboards" className="text-gray-400 hover:text-white transition">Dashboards</Link>
+          <Link href="/chat" className="text-gray-400 hover:text-white transition">Ask AI</Link>
+          <Link href="/connectors" className="text-gray-400 hover:text-white transition">Connectors</Link>
+          <Link href="/settings" className="text-gray-400 hover:text-white transition">Settings</Link>
         </div>
       </nav>
 
@@ -64,13 +64,13 @@ export default async function DigestPage() {
 
         {insights.length === 0 && (
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-10 text-center text-gray-500">
-            <p>Insights are generated each morning. Come back tomorrow, or <Link href={`${BASE}/chat`} className="text-brand-500 hover:underline">ask the AI</Link> a question now.</p>
+            <p>Insights are generated each morning. Come back tomorrow, or <Link href="/chat" className="text-brand-500 hover:underline">ask the AI</Link> a question now.</p>
           </div>
         )}
 
         <div className="space-y-4">
           {insights.map(insight => (
-            <Link key={insight.id} href={`${BASE}/insights/${insight.id}`}>
+            <Link key={insight.id} href={`/insights/${insight.id}`}>
               <div className={`border rounded-2xl p-6 space-y-3 hover:border-gray-600 transition cursor-pointer ${severityColor(insight.severity)}`}>
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${severityDot(insight.severity)}`} />
@@ -79,7 +79,7 @@ export default async function DigestPage() {
                 <h2 className="font-semibold text-white text-lg">{insight.title}</h2>
                 <p className="text-gray-300 text-sm leading-relaxed">{insight.body}</p>
                 {insight.suggested_actions.length > 0 && (
-                  <p className="text-xs text-brand-400">{insight.suggested_actions.length} suggested action{insight.suggested_actions.length !== 1 ? 's' : ''} →</p>
+                  <p className="text-xs text-brand-400">{insight.suggested_actions.length} suggested action{insight.suggested_actions.length !== 1 ? 's' : ''} &rarr;</p>
                 )}
               </div>
             </Link>

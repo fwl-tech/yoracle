@@ -16,14 +16,14 @@ function formatValue(value: number, format: string, unit: string): string {
 
 export default async function DashboardDetailPage({ params }: { params: { id: string } }) {
   const { userId } = await auth()
-  if (!userId) redirect(`${BASE}/sign-in`)
+  if (!userId) redirect('/sign-in')
 
   const db = getSupabaseClient()
   const { data: user } = await db.from('users').select('role, org_id').eq('clerk_user_id', userId).maybeSingle()
-  if (!user) redirect(`${BASE}/onboarding`)
+  if (!user) redirect('/onboarding')
 
   const dashboard = DASHBOARDS.find(d => d.id === params.id)
-  if (!dashboard || !dashboard.roles.includes(user.role as UserRole)) redirect(`${BASE}/dashboards`)
+  if (!dashboard || !dashboard.roles.includes(user.role as UserRole)) redirect('/dashboards')
 
   const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'}${BASE}/api/dashboards/${params.id}/data`, {
     headers: { Cookie: '' },
@@ -34,7 +34,7 @@ export default async function DashboardDetailPage({ params }: { params: { id: st
   return (
     <div className="min-h-screen bg-gray-950">
       <nav className="border-b border-gray-800 px-6 py-4 flex items-center gap-4">
-        <Link href={`${BASE}/dashboards`} className="text-gray-400 hover:text-white text-sm transition">← Dashboards</Link>
+        <Link href="/dashboards" className="text-gray-400 hover:text-white text-sm transition">&larr; Dashboards</Link>
         <span className="font-semibold text-white">{dashboard!.label}</span>
       </nav>
       <main className="max-w-5xl mx-auto px-6 py-10 space-y-6">

@@ -6,11 +6,11 @@ const BASE = process.env.NEXT_PUBLIC_BASE_PATH
 
 export default async function AdminPage() {
   const { userId } = await auth()
-  if (!userId) redirect(`${BASE}/sign-in`)
+  if (!userId) redirect('/sign-in')
 
   const db = getSupabaseClient()
   const { data: user } = await db.from('users').select('role, org_id').eq('clerk_user_id', userId).maybeSingle()
-  if (!user || user.role !== 'admin') redirect(`${BASE}/digest`)
+  if (!user || user.role !== 'admin') redirect('/digest')
 
   const [{ data: users }, { data: connectors }, { data: ontology }] = await Promise.all([
     db.from('users').select('id, name, email, role, created_at').eq('org_id', user.org_id),
@@ -21,7 +21,7 @@ export default async function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-950">
       <nav className="border-b border-gray-800 px-6 py-4 flex items-center gap-4">
-        <a href={`${BASE}/digest`} className="text-gray-400 hover:text-white text-sm transition">← Digest</a>
+        <a href={`${BASE}/digest`} className="text-gray-400 hover:text-white text-sm transition">&larr; Digest</a>
         <span className="font-semibold text-white">Org Admin</span>
       </nav>
       <main className="max-w-5xl mx-auto px-6 py-10 space-y-10">
