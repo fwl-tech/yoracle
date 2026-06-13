@@ -20,9 +20,13 @@ export default clerkMiddleware((auth, req) => {
 
 export const config = {
   matcher: [
-    // Pages — Next.js middleware sees the full path including basePath for pages.
+    // Explicit root path — must be listed separately because the regex below
+    // requires at least a slash after /apps/yoracle and may not match bare root.
+    '/apps/yoracle',
+    '/apps/yoracle/',
+    // Pages — Next.js middleware sees the full path including basePath.
     // Skip _next internals and static file extensions.
-    '/apps/yoracle/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|woff2?|ttf)).*)',
+    '/apps/yoracle/((?!_next/static|_next/image|favicon\.ico|.*\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|woff2?|ttf)).*)',
     // API routes — middleware sees these WITHOUT the basePath prefix.
     '/api/(.*)',
   ],
