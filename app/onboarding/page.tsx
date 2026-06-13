@@ -17,37 +17,54 @@ export default function OnboardingPage() {
   const [completionPct, setCompletionPct] = useState(0)
   const [done, setDone] = useState(false)
   const [started, setStarted] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function start() {
     setStarted(true)
-    const res = await fetch(`${BASE}/api/onboarding/answer`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question_id: '__init__', answer: '' }),
-    })
-    const data = await res.json()
-    setCurrentQuestion(data.next_question)
-    setCompletionPct(data.completeness.completion_pct)
-    if (!data.next_question) setDone(true)
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch(`${BASE}/api/onboarding/answer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question_id: '__init__', answer: '' }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
+      setCurrentQuestion(data.next_question ?? null)
+      setCompletionPct(data.completeness?.completion_pct ?? 0)
+      if (!data.next_question) setDone(true)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Something went wrong. Please refresh and try again.')
+      setStarted(false)
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function submitAnswer() {
     if (!currentQuestion || !answer.trim()) return
     setLoading(true)
-    const res = await fetch(`${BASE}/api/onboarding/answer`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question_id: currentQuestion.id, answer }),
-    })
-    const data = await res.json()
-    setAnswer('')
-    setCompletionPct(data.completeness.completion_pct)
-    if (data.next_question) {
-      setCurrentQuestion(data.next_question)
-    } else {
-      setDone(true)
+    try {
+      const res = await fetch(`${BASE}/api/onboarding/answer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question_id: currentQuestion.id, answer }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
+      setAnswer('')
+      setCompletionPct(data.completeness?.completion_pct ?? completionPct)
+      if (data.next_question) {
+        setCurrentQuestion(data.next_question)
+      } else {
+        setDone(true)
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to save answer. Try again.')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   if (!started) {
@@ -56,9 +73,10 @@ export default function OnboardingPage() {
         <div className="max-w-lg text-center space-y-6 px-6">
           <div className="text-5xl">&#x1F52E;</div>
           <h1 className="text-3xl font-bold text-white">Welcome to Yoracle</h1>
-          <p className="text-gray-400 text-lg">I’ll ask you a few questions about your business to build your intelligence layer. Takes about 3 minutes.</p>
-          <button onClick={start} className="bg-brand-500 hover:bg-brand-600 text-white px-8 py-3 rounded-lg font-medium text-lg transition">
-            Get started
+          <p className="text-gray-400 text-lg">I'll ask you a few questions about your business to build your intelligence layer. Takes about 3 minutes.</p>
+          {error && <p className="text-red-400 text-sm">{error}</p>}
+          <button onClick={start} disabled={loading} className="bg-brand-500 hover:bg-brand-600 disabled:opacity-40 text-white px-8 py-3 rounded-lg font-medium text-lg transition">
+            {loading ? 'Setting up…' : 'Get started'}
           </button>
         </div>
       </div>
@@ -73,7 +91,7 @@ export default function OnboardingPage() {
           <h1 className="text-3xl font-bold text-white">Your intelligence layer is ready</h1>
           <p className="text-gray-400">Yoracle will now surface insights tailored to your role and business context.</p>
           <a href={`${BASE}/digest`} className="inline-block bg-brand-500 hover:bg-brand-600 text-white px-8 py-3 rounded-lg font-medium text-lg transition">
-            See today’s insights
+            See today's insights
           </a>
         </div>
       </div>
@@ -83,7 +101,6 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-950 px-6">
       <div className="w-full max-w-xl space-y-6">
-        {/* Progress */}
         <div className="space-y-2">
           <div className="flex justify-between text-sm text-gray-400">
             <span>Building your intelligence layer</span>
@@ -94,7 +111,12 @@ export default function OnboardingPage() {
           </div>
         </div>
 
-        {/* Question card */}
+        {error && (
+          <div className="bg-red-950/40 border border-red-800 rounded-xl px-4 py-3 text-red-400 text-sm">
+            {error}
+          </div>
+        )}
+
         {currentQuestion && (
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 space-y-4">
             <p className="text-xl font-medium text-white">{currentQuestion.question}</p>
@@ -115,6 +137,10 @@ export default function OnboardingPage() {
               {loading ? 'Saving…' : 'Continue'}
             </button>
           </div>
+        )}
+
+        {!currentQuestion && !error && (
+          <div className="text-center text-gray-500 text-sm">Loading your first question…</div>
         )}
       </div>
     </div>
