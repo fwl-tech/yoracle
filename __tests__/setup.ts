@@ -63,14 +63,6 @@ vi.mock('@anthropic-ai/sdk', () => ({
   })),
 }))
 
-// Mock AI lib module
-vi.mock('@/lib/ai', () => ({
-  generateInsights: vi.fn().mockResolvedValue([]),
-  generateInsightsForUser: vi.fn().mockResolvedValue([]),
-  streamChat: vi.fn().mockImplementation(async function* () { yield 'mock response' }),
-  getAIClient: vi.fn(),
-}))
-
 // Provide required env vars
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co'
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key'

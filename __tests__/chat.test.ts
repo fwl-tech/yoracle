@@ -1,61 +1,182 @@
-import { describe, it, expect, vi } from 'vitest'
-import type { ChatMessage, UserContext } from '@/types'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const mockContext: UserContext = {
-  id: 'ctx-1',
-  user_id: 'user-1',
-  conversation_history: [
-    { role: 'user', content: 'What is our ARR?', timestamp: '2026-06-12T09:00:00Z' },
-    { role: 'assistant', content: 'Your ARR is $4.2M, up 12% YoY. Source: Salesforce.', timestamp: '2026-06-12T09:00:02Z', sources: ['salesforce'] },
-  ],
-  preference_signals: {},
-  last_active: '2026-06-12T09:00:02Z',
-}
+// Do NOT import from @/lib/ai at top level — we need to control module state.
+// The global setup mocks @anthropic-ai/sdk so the real lib/ai.ts uses a mock client.
 
-describe('chat history', () => {
-  it('stores messages with role, content, and timestamp', () => {
-    const msg = mockContext.conversation_history[0]
-    expect(msg.role).toBe('user')
-    expect(msg.content).toBeTruthy()
-    expect(msg.timestamp).toBeTruthy()
+describe('getAIClient', () => {
+  it('returns an Anthropic instance', async () => {
+    const { getAIClient } = await import('@/lib/ai')
+    const client = getAIClient()
+    expect(client).toBeDefined()
   })
 
-  it('assistant responses include source attribution', () => {
-    const reply = mockContext.conversation_history[1]
-    expect(reply.role).toBe('assistant')
-    expect(reply.sources).toBeDefined()
-    expect(reply.sources!.length).toBeGreaterThan(0)
-  })
-
-  it('history is ordered chronologically', () => {
-    const timestamps = mockContext.conversation_history.map(m => m.timestamp)
-    const sorted = [...timestamps].sort()
-    expect(timestamps).toEqual(sorted)
+  it('returns the same singleton on repeated calls', async () => {
+    const { getAIClient } = await import('@/lib/ai')
+    const a = getAIClient()
+    const b = getAIClient()
+    expect(a).toBe(b)
   })
 })
 
 describe('streamChat', () => {
-  it('streamChat is defined and callable', async () => {
-    const { streamChat } = await import('@/lib/ai')
-    expect(streamChat).toBeDefined()
+  beforeEach(() => {
+    vi.clearAllMocks()
   })
 
-  it('does not expose raw connector credentials in responses', () => {
-    const response = mockContext.conversation_history[1].content
-    expect(response).not.toContain('api_key')
-    expect(response).not.toContain('password')
-    expect(response).not.toContain('secret')
+  const mockUser = { id: 'u1', org_id: 'org1', name: 'Alice', email: 'alice@example.com', role: 'ceo' as const, clerk_user_id: 'clerk1' }
+  const mockOntology = {
+    id: 'ont1',
+    org_id: 'org1',
+    version: 1,
+    customer_definition: { 'q-customer-type': 'B2B' },
+    revenue_model: { 'q-revenue-model': 'Subscription' },
+    cost_structure: {},
+    departments: ['Sales', 'Engineering'],
+    saas_connections: [],
+  }
+
+  it('yields text chunks from content_block_delta events', async () => {
+    const Anthropic = (await import('@anthropic-ai/sdk')).default
+    vi.mocked(Anthropic).mockImplementation(() => ({
+      messages: {
+        create: vi.fn(),
+        stream: vi.fn().mockReturnValue({
+          [Symbol.asyncIterator]: async function* () {
+            yield { type: 'content_block_delta', delta: { type: 'text_delta', text: 'Hello' } }
+            yield { type: 'content_block_delta', delta: { type: 'text_delta', text: ' world' } }
+            yield { type: 'message_stop' }
+          },
+        }),
+      },
+    }) as ReturnType<InstanceType<typeof Anthropic>['messages']['stream']>)
+
+    // Reset the singleton so the new mock is picked up
+    vi.resetModules()
+    const { streamChat } = await import('@/lib/ai')
+    const chunks: string[] = []
+    for await (const chunk of streamChat(mockUser, mockOntology, [], 'What is ARR?')) {
+      chunks.push(chunk)
+    }
+    expect(chunks).toEqual(['Hello', ' world'])
+  })
+
+  it('skips non-text_delta chunks', async () => {
+    const Anthropic = (await import('@anthropic-ai/sdk')).default
+    vi.mocked(Anthropic).mockImplementation(() => ({
+      messages: {
+        create: vi.fn(),
+        stream: vi.fn().mockReturnValue({
+          [Symbol.asyncIterator]: async function* () {
+            yield { type: 'message_start', message: {} }
+            yield { type: 'content_block_start', index: 0 }
+            yield { type: 'content_block_delta', delta: { type: 'text_delta', text: 'Answer' } }
+            yield { type: 'content_block_stop' }
+          },
+        }),
+      },
+    }) as ReturnType<InstanceType<typeof Anthropic>['messages']['stream']>)
+
+    vi.resetModules()
+    const { streamChat } = await import('@/lib/ai')
+    const chunks: string[] = []
+    for await (const chunk of streamChat(mockUser, null, [], 'Hi')) {
+      chunks.push(chunk)
+    }
+    expect(chunks).toEqual(['Answer'])
+  })
+
+  it('appends dataContext to user message when provided', async () => {
+    const Anthropic = (await import('@anthropic-ai/sdk')).default
+    const streamMock = vi.fn().mockReturnValue({ [Symbol.asyncIterator]: async function* () {} })
+    vi.mocked(Anthropic).mockImplementation(() => ({
+      messages: { create: vi.fn(), stream: streamMock },
+    }) as ReturnType<InstanceType<typeof Anthropic>['messages']['stream']>)
+
+    vi.resetModules()
+    const { streamChat } = await import('@/lib/ai')
+    // Exhaust the generator
+    for await (const _ of streamChat(mockUser, null, [], 'question', 'data-snapshot')) { /* noop */ }
+    const callArgs = streamMock.mock.calls[0][0]
+    const lastMsg = callArgs.messages[callArgs.messages.length - 1]
+    expect(lastMsg.content).toContain('data-snapshot')
+    expect(lastMsg.content).toContain('question')
+  })
+
+  it('does not append dataContext when not provided', async () => {
+    const Anthropic = (await import('@anthropic-ai/sdk')).default
+    const streamMock = vi.fn().mockReturnValue({ [Symbol.asyncIterator]: async function* () {} })
+    vi.mocked(Anthropic).mockImplementation(() => ({
+      messages: { create: vi.fn(), stream: streamMock },
+    }) as ReturnType<InstanceType<typeof Anthropic>['messages']['stream']>)
+
+    vi.resetModules()
+    const { streamChat } = await import('@/lib/ai')
+    for await (const _ of streamChat(mockUser, null, [], 'question')) { /* noop */ }
+    const callArgs = streamMock.mock.calls[0][0]
+    const lastMsg = callArgs.messages[callArgs.messages.length - 1]
+    expect(lastMsg.content).toBe('question')
+  })
+
+  it('truncates history to last 20 messages', async () => {
+    const Anthropic = (await import('@anthropic-ai/sdk')).default
+    const streamMock = vi.fn().mockReturnValue({ [Symbol.asyncIterator]: async function* () {} })
+    vi.mocked(Anthropic).mockImplementation(() => ({
+      messages: { create: vi.fn(), stream: streamMock },
+    }) as ReturnType<InstanceType<typeof Anthropic>['messages']['stream']>)
+
+    vi.resetModules()
+    const { streamChat } = await import('@/lib/ai')
+    const history = Array.from({ length: 30 }, (_, i) => ({
+      id: String(i), role: i % 2 === 0 ? 'user' as const : 'assistant' as const,
+      content: `msg ${i}`, org_id: 'org1', user_id: 'u1', created_at: '',
+    }))
+    for await (const _ of streamChat(mockUser, null, history, 'new')) { /* noop */ }
+    const callArgs = streamMock.mock.calls[0][0]
+    // 20 history + 1 new message
+    expect(callArgs.messages).toHaveLength(21)
   })
 })
 
-describe('chat context building', () => {
-  it('truncates history to last 20 messages to stay within context limits', () => {
-    const longHistory: ChatMessage[] = Array.from({ length: 25 }, (_, i) => ({
-      role: i % 2 === 0 ? 'user' : 'assistant',
-      content: `Message ${i}`,
-      timestamp: new Date(2026, 0, 1, i).toISOString(),
-    }))
-    const truncated = longHistory.slice(-20)
-    expect(truncated.length).toBe(20)
+describe('generateInsightsForUser', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  const mockUser = { id: 'u1', org_id: 'org1', name: 'Alice', email: 'alice@example.com', role: 'ceo' as const, clerk_user_id: 'clerk1' }
+  const mockOntology = {
+    id: 'ont1', org_id: 'org1', version: 1,
+    customer_definition: {}, revenue_model: {}, cost_structure: {},
+    departments: [], saas_connections: [],
+  }
+
+  it('parses and returns JSON insights when content type is text', async () => {
+    const mockInsights = [{ title: 'ARR growing', body: 'Up 20% QoQ', category: 'revenue', severity: 'info', metric_refs: [], suggested_actions: [] }]
+    const Anthropic = (await import('@anthropic-ai/sdk')).default
+    vi.mocked(Anthropic).mockImplementation(() => ({
+      messages: {
+        stream: vi.fn(),
+        create: vi.fn().mockResolvedValue({ content: [{ type: 'text', text: JSON.stringify(mockInsights) }] }),
+      },
+    }) as ReturnType<InstanceType<typeof Anthropic>['messages']['stream']>)
+
+    vi.resetModules()
+    const { generateInsightsForUser } = await import('@/lib/ai')
+    const result = await generateInsightsForUser(mockUser, mockOntology, [])
+    expect(result).toEqual(mockInsights)
+  })
+
+  it('returns empty array when content type is not text', async () => {
+    const Anthropic = (await import('@anthropic-ai/sdk')).default
+    vi.mocked(Anthropic).mockImplementation(() => ({
+      messages: {
+        stream: vi.fn(),
+        create: vi.fn().mockResolvedValue({ content: [{ type: 'tool_use', id: 'tu1', name: 'fn', input: {} }] }),
+      },
+    }) as ReturnType<InstanceType<typeof Anthropic>['messages']['stream']>)
+
+    vi.resetModules()
+    const { generateInsightsForUser } = await import('@/lib/ai')
+    const result = await generateInsightsForUser(mockUser, mockOntology, [])
+    expect(result).toEqual([])
   })
 })

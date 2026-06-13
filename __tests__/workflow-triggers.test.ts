@@ -1,47 +1,69 @@
-import { describe, it, expect, vi } from 'vitest'
-import type { SuggestedAction, WorkflowTrigger } from '@/types'
+import { describe, it, expect } from 'vitest'
+import { SUPPORTED_CONNECTORS } from '@/lib/connectors'
+import type { ConnectorType } from '@/types'
 
-const mockAction: SuggestedAction = {
-  id: 'act-1',
-  label: 'Create follow-up task',
-  description: 'Create a Salesforce task for the 3 at-risk accounts',
-  target_system: 'salesforce',
-  action_type: 'create_task',
-  payload: { subject: 'Churn risk review', due_days: 2, account_ids: ['001xx', '002xx'] },
-}
+const VALID_CONNECTOR_IDS: ConnectorType[] = ['salesforce', 'hubspot', 'netsuite', 'sap', 'zendesk']
 
-describe('workflow trigger creation', () => {
-  it('trigger has required fields', () => {
-    const trigger: Partial<WorkflowTrigger> = {
-      action_type: mockAction.action_type,
-      target_system: mockAction.target_system,
-      payload: mockAction.payload,
-      status: 'pending',
+describe('ConnectorType values', () => {
+  it('SUPPORTED_CONNECTORS covers all expected connector types', () => {
+    const ids = SUPPORTED_CONNECTORS.map(c => c.id)
+    for (const id of VALID_CONNECTOR_IDS) {
+      expect(ids).toContain(id)
     }
-    expect(trigger.action_type).toBeTruthy()
-    expect(trigger.target_system).toBeTruthy()
-    expect(trigger.status).toBe('pending')
   })
 
-  it('only allows valid target systems', () => {
-    const valid = ['salesforce', 'hubspot', 'netsuite', 'sap', 'zendesk']
-    expect(valid).toContain(mockAction.target_system)
+  it('each connector spec has a label and logo', () => {
+    for (const c of SUPPORTED_CONNECTORS) {
+      expect(typeof c.label).toBe('string')
+      expect(c.label.length).toBeGreaterThan(0)
+      expect(typeof c.logo).toBe('string')
+      expect(c.logo).toContain('/apps/yoracle/')
+    }
   })
 
-  it('triggerWorkflowAction is defined and callable', async () => {
-    const mod = await import('@/lib/connectors')
-    expect(mod.triggerWorkflowAction).toBeDefined()
-  })
-})
-
-describe('trigger status lifecycle', () => {
-  it('starts as pending', () => {
-    const status: WorkflowTrigger['status'] = 'pending'
-    expect(status).toBe('pending')
+  it('salesforce requires instance_url, client_id, client_secret', () => {
+    const sf = SUPPORTED_CONNECTORS.find(c => c.id === 'salesforce')!
+    const keys = sf.required_fields.map(f => f.key)
+    expect(keys).toContain('instance_url')
+    expect(keys).toContain('client_id')
+    expect(keys).toContain('client_secret')
   })
 
-  it('valid statuses are pending, success, failed', () => {
-    const valid: WorkflowTrigger['status'][] = ['pending', 'success', 'failed']
-    valid.forEach(s => expect(['pending', 'success', 'failed']).toContain(s))
+  it('hubspot requires access_token only', () => {
+    const hs = SUPPORTED_CONNECTORS.find(c => c.id === 'hubspot')!
+    expect(hs.required_fields).toHaveLength(1)
+    expect(hs.required_fields[0].key).toBe('access_token')
+  })
+
+  it('netsuite requires 5 fields including account_id and token_secret', () => {
+    const ns = SUPPORTED_CONNECTORS.find(c => c.id === 'netsuite')!
+    expect(ns.required_fields).toHaveLength(5)
+    const keys = ns.required_fields.map(f => f.key)
+    expect(keys).toContain('account_id')
+    expect(keys).toContain('token_secret')
+  })
+
+  it('zendesk requires subdomain, email, api_token', () => {
+    const zd = SUPPORTED_CONNECTORS.find(c => c.id === 'zendesk')!
+    const keys = zd.required_fields.map(f => f.key)
+    expect(keys).toContain('subdomain')
+    expect(keys).toContain('email')
+    expect(keys).toContain('api_token')
+  })
+
+  it('instance_url field in salesforce is type url', () => {
+    const sf = SUPPORTED_CONNECTORS.find(c => c.id === 'salesforce')!
+    const field = sf.required_fields.find(f => f.key === 'instance_url')!
+    expect(field.type).toBe('url')
+  })
+
+  it('all password fields are marked as type password', () => {
+    for (const c of SUPPORTED_CONNECTORS) {
+      for (const f of c.required_fields) {
+        if (f.key.includes('secret') || f.key.includes('token') || f.key === 'password') {
+          expect(f.type).toBe('password')
+        }
+      }
+    }
   })
 })
