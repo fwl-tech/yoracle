@@ -1,2 +1,5 @@
-# fwl-app-01
-Hatch AI slot — unclaimed
+# yoracle
+
+Built with [Hatch AI](https://hatchai.fairwaterlabs.com/apps/yoracle) by Fairwater Labs.
+
+**Live app**: https://hatchai.fairwaterlabs.com/apps/yoracle
