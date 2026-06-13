@@ -2,9 +2,8 @@ import type { Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import './globals.css'
 
-// Clerk requires NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY at render time.
-// Railway only injects env vars at runtime, not build time, so we must
-// opt every page out of static generation.
+// All pages are auth-gated via Clerk. Force dynamic rendering so env vars
+// are resolved at request time rather than build time.
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
