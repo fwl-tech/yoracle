@@ -88,7 +88,7 @@ async function triggerSalesforce(
   actionType: string,
   payload: Record<string, unknown>,
   auth: Record<string, unknown>,
-): Promise<{ success: boolean; result?: unknown }> {
+): Promise<{ success: boolean; result?: unknown; error?: string }> {
   const baseUrl = `${auth.instance_url}/services/data/v59.0`
   const tokenRes = await fetch(`${auth.instance_url}/services/oauth2/token`, {
     method: 'POST',
@@ -113,7 +113,7 @@ async function triggerHubspot(
   actionType: string,
   payload: Record<string, unknown>,
   auth: Record<string, unknown>,
-): Promise<{ success: boolean; result?: unknown }> {
+): Promise<{ success: boolean; result?: unknown; error?: string }> {
   const headers = { Authorization: `Bearer ${auth.access_token}`, 'Content-Type': 'application/json' }
   if (actionType === 'create_task') {
     const r = await fetch('https://api.hubapi.com/crm/v3/objects/tasks', { method: 'POST', headers, body: JSON.stringify({ properties: payload }) })
@@ -126,7 +126,7 @@ async function triggerZendesk(
   actionType: string,
   payload: Record<string, unknown>,
   auth: Record<string, unknown>,
-): Promise<{ success: boolean; result?: unknown }> {
+): Promise<{ success: boolean; result?: unknown; error?: string }> {
   const base = `https://${auth.subdomain}.zendesk.com/api/v2`
   const creds = Buffer.from(`${auth.email}/token:${auth.api_token}`).toString('base64')
   const headers = { Authorization: `Basic ${creds}`, 'Content-Type': 'application/json' }
