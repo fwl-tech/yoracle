@@ -1,9 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
-// Public routes — matched against the path as seen by middleware.
-// Pages include the basePath prefix (/apps/yoracle/...).
-// API routes do NOT include the basePath prefix in middleware (/api/...).
 const isPublic = createRouteMatcher([
   '/apps/yoracle/health',
   '/apps/yoracle/sign-in(.*)',
@@ -11,7 +8,23 @@ const isPublic = createRouteMatcher([
   '/health',
 ])
 
+const isAuthPage = createRouteMatcher([
+  '/apps/yoracle/sign-in(.*)',
+  '/apps/yoracle/sign-up(.*)',
+])
+
 export default clerkMiddleware((auth, req) => {
+  // If the user is already authenticated and lands on a Clerk auth page,
+  // redirect them to the digest before the page renders. Without this,
+  // Clerk's server component calls Next.js redirect(signInFallbackRedirectUrl)
+  // which auto-prepends basePath and produces a double-prefix 500.
+  const { userId } = auth()
+  if (userId && isAuthPage(req)) {
+    const url = req.nextUrl.clone()
+    url.pathname = '/apps/yoracle/digest'
+    return NextResponse.redirect(url)
+  }
+
   if (!isPublic(req)) {
     auth.protect()
   }
@@ -20,14 +33,9 @@ export default clerkMiddleware((auth, req) => {
 
 export const config = {
   matcher: [
-    // Explicit root path — must be listed separately because the regex below
-    // requires at least a slash after /apps/yoracle and may not match bare root.
     '/apps/yoracle',
     '/apps/yoracle/',
-    // Pages — Next.js middleware sees the full path including basePath.
-    // Skip _next internals and static file extensions.
     '/apps/yoracle/((?!_next/static|_next/image|favicon\.ico|.*\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|woff2?|ttf)).*)',
-    // API routes — middleware sees these WITHOUT the basePath prefix.
     '/api/(.*)',
   ],
 }
