@@ -4,7 +4,8 @@ import { getSupabaseClient } from '@/lib/supabase'
 import { triggerWorkflowAction } from '@/lib/connectors'
 import type { SuggestedAction } from '@/types'
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -14,7 +15,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const { data: user } = await db.from('users').select('id, org_id').eq('clerk_user_id', userId).single()
   if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-  const { data: insight } = await db.from('insights').select('*').eq('id', params.id).eq('user_id', user.id).single()
+  const { data: insight } = await db.from('insights').select('*').eq('id', id).eq('user_id', user.id).single()
   if (!insight) return NextResponse.json({ error: 'Insight not found' }, { status: 404 })
 
   const action = (insight.suggested_actions as SuggestedAction[]).find((a: SuggestedAction) => a.id === action_id)
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   await db.from('workflow_triggers').insert({
     user_id: user.id,
-    insight_id: params.id,
+    insight_id: id,
     action_type: action.action_type,
     target_system: action.target_system,
     payload: action.payload,
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   })
 
   if (result.success) {
-    await db.from('insights').update({ status: 'actioned' }).eq('id', params.id)
+    await db.from('insights').update({ status: 'actioned' }).eq('id', id)
   }
 
   return NextResponse.json(result)

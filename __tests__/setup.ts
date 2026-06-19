@@ -1,5 +1,8 @@
 import { vi } from 'vitest'
 
+// Mock Next.js server-only guard (not available in Vitest)
+vi.mock('server-only', () => ({}))
+
 // Mock Next.js server internals (not available in Vitest node env)
 vi.mock('next/server', () => ({
   NextResponse: { json: vi.fn((data: unknown, init?: ResponseInit) => ({ data, init })) },
@@ -15,6 +18,7 @@ vi.mock('@supabase/supabase-js', () => ({
       update: vi.fn().mockReturnThis(),
       delete: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
       gte: vi.fn().mockReturnThis(),
       lte: vi.fn().mockReturnThis(),
       order: vi.fn().mockReturnThis(),
@@ -34,6 +38,7 @@ vi.mock('@/lib/supabase', () => ({
       update: vi.fn().mockReturnThis(),
       delete: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
       gte: vi.fn().mockReturnThis(),
       lte: vi.fn().mockReturnThis(),
       order: vi.fn().mockReturnThis(),
@@ -53,14 +58,16 @@ vi.mock('@clerk/nextjs/server', () => ({
   createRouteMatcher: vi.fn(() => vi.fn(() => false)),
 }))
 
-// Mock Anthropic SDK
+// Mock Anthropic SDK — must use function/class for `new Anthropic()` in vitest 4
 vi.mock('@anthropic-ai/sdk', () => ({
-  default: vi.fn().mockImplementation(() => ({
-    messages: {
-      create: vi.fn().mockResolvedValue({ content: [{ type: 'text', text: '[]' }] }),
-      stream: vi.fn().mockReturnValue({ [Symbol.asyncIterator]: async function* () {} }),
-    },
-  })),
+  default: vi.fn().mockImplementation(function (this: unknown) {
+    return {
+      messages: {
+        create: vi.fn().mockResolvedValue({ content: [{ type: 'text', text: '[]' }] }),
+        stream: vi.fn().mockReturnValue({ [Symbol.asyncIterator]: async function* () {} }),
+      },
+    }
+  }),
 }))
 
 // Provide required env vars

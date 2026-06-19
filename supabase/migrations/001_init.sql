@@ -107,3 +107,8 @@ CREATE INDEX idx_snapshots_connector   ON data_snapshots(connector_id, synced_at
 CREATE INDEX idx_ontologies_org        ON ontologies(org_id, version DESC);
 CREATE INDEX idx_users_clerk           ON users(clerk_user_id);
 CREATE INDEX idx_users_org             ON users(org_id);
+
+-- Allow API access via service role
+GRANT USAGE ON SCHEMA yoracle TO service_role, anon, authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA yoracle TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA yoracle TO authenticated;

@@ -186,9 +186,16 @@ describe('generateInsights', () => {
         if (table === 'data_snapshots') {
           return {
             select: vi.fn().mockReturnThis(),
+            in: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
             order: vi.fn().mockReturnThis(),
             limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+          }
+        }
+        if (table === 'connectors') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
           }
         }
         return { insert: insertMock }

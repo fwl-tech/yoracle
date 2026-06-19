@@ -10,8 +10,8 @@ import type { Ontology } from '@/types'
 // ─── ONBOARDING_QUESTIONS integrity ────────────────────────────────────────
 
 describe('ONBOARDING_QUESTIONS', () => {
-  it('has 6 questions', () => {
-    expect(ONBOARDING_QUESTIONS).toHaveLength(6)
+  it('has 7 questions', () => {
+    expect(ONBOARDING_QUESTIONS).toHaveLength(7)
   })
 
   it('all question ids are unique', () => {
@@ -20,7 +20,7 @@ describe('ONBOARDING_QUESTIONS', () => {
   })
 
   it('all fields are valid Ontology fields', () => {
-    const validFields = ['customer_definition', 'revenue_model', 'cost_structure', 'departments']
+    const validFields = ['customer_definition', 'revenue_model', 'cost_structure', 'departments', 'saas_connections']
     for (const q of ONBOARDING_QUESTIONS) {
       expect(validFields).toContain(q.field)
     }
@@ -98,6 +98,11 @@ describe('applyOnboardingAnswer', () => {
   it('q-cost-structure: merges into cost_structure under question key', () => {
     const result = applyOnboardingAnswer({}, 'q-cost-structure', 'Headcount 60%, Cloud 20%')
     expect(result.cost_structure).toEqual({ 'q-cost-structure': 'Headcount 60%, Cloud 20%' })
+  })
+
+  it('q-saas-tools: splits into saas_connections array', () => {
+    const result = applyOnboardingAnswer({}, 'q-saas-tools', 'Salesforce, HubSpot, Zendesk')
+    expect(result.saas_connections).toEqual(['salesforce', 'hubspot', 'zendesk'])
   })
 })
 
@@ -213,20 +218,21 @@ describe('getNextOnboardingQuestion', () => {
     expect(q!.id).toBe('q-customer-type')
   })
 
-  it('skips already-filled fields', () => {
+  it('skips already-answered questions', () => {
     const o = applyOnboardingAnswer({}, 'q-customer-type', 'B2B')
     const q = getNextOnboardingQuestion(o, 'ceo')
-    // customer_definition is filled so next should be revenue_model question
     expect(q).not.toBeNull()
-    expect(q!.field).toBe('revenue_model')
+    expect(q!.id).toBe('q-customer-segments')
   })
 
   it('returns null when all fields are complete', () => {
     let o = applyOnboardingAnswer({}, 'q-customer-type', 'B2B')
+    o = applyOnboardingAnswer(o, 'q-customer-segments', 'Enterprise')
     o = applyOnboardingAnswer(o, 'q-revenue-model', 'Subscription')
+    o = applyOnboardingAnswer(o, 'q-primary-metric', 'ARR')
     o = applyOnboardingAnswer(o, 'q-cost-structure', 'Headcount 60%')
     o = applyOnboardingAnswer(o, 'q-departments', 'Sales')
-    o = { ...o, saas_connections: ['salesforce'] as unknown as Ontology['saas_connections'] }
+    o = applyOnboardingAnswer(o, 'q-saas-tools', 'Salesforce')
     const q = getNextOnboardingQuestion(o, 'ceo')
     expect(q).toBeNull()
   })

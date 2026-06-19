@@ -3,12 +3,131 @@
 @tailwind utilities;
 
 :root {
-  --brand: #4f6ef7;
+  --surface-base: #f7f5f2;
+  --surface-raised: #ffffff;
+  --surface-sidebar: #f0ede8;
+  --ink: #1c1917;
+  --ink-secondary: #57534e;
+  --accent: #c96442;
 }
 
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-surface-base text-ink antialiased;
+  }
 }
 
-.scrollbar-hide::-webkit-scrollbar { display: none; }
-.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+@layer components {
+  .page-main {
+    @apply max-w-5xl mx-auto px-4 sm:px-8 py-6 sm:py-10 pb-nav;
+  }
+
+  .page-main-narrow {
+    @apply max-w-3xl mx-auto px-4 sm:px-8 py-6 sm:py-10 pb-nav;
+  }
+
+  .page-main-tight {
+    @apply max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-10 pb-nav;
+  }
+
+  .page-header {
+    @apply space-y-1 mb-6 sm:mb-8;
+  }
+
+  .page-title {
+    @apply font-heading text-2xl sm:text-3xl font-medium text-ink tracking-tight;
+  }
+
+  .page-subtitle {
+    @apply text-ink-secondary text-sm sm:text-base;
+  }
+
+  .section-label {
+    @apply text-[11px] font-semibold uppercase tracking-widest text-ink-muted;
+  }
+
+  .card {
+    @apply bg-surface-raised border border-ink-faint/60 rounded-2xl shadow-card;
+  }
+
+  .card-interactive {
+    @apply card transition-all duration-200 hover:shadow-card-hover hover:border-stone-300 active:scale-[0.99];
+  }
+
+  .btn-primary {
+    @apply bg-ink text-surface-raised hover:bg-stone-800 active:bg-stone-900 disabled:opacity-40 font-medium rounded-xl transition min-h-11 px-5 text-sm shadow-sm;
+  }
+
+  .btn-accent {
+    @apply bg-accent-500 text-white hover:bg-accent-600 active:bg-accent-700 disabled:opacity-40 font-medium rounded-xl transition min-h-11 px-5 text-sm;
+  }
+
+  .btn-secondary {
+    @apply bg-surface-raised text-ink border border-ink-faint hover:bg-surface-inset active:bg-surface-hover font-medium rounded-xl transition min-h-11 px-5 text-sm;
+  }
+
+  .btn-ghost {
+    @apply text-ink-secondary hover:text-ink hover:bg-surface-inset active:bg-surface-hover transition min-h-11 px-3 rounded-xl text-sm;
+  }
+
+  .input-field {
+    @apply w-full bg-surface-raised border border-ink-faint rounded-xl px-4 py-3 text-ink placeholder-ink-muted focus:outline-none focus:ring-2 focus:ring-accent-500/20 focus:border-accent-400 transition text-sm min-h-11;
+  }
+
+  .select-field {
+    @apply bg-surface-raised border border-ink-faint rounded-xl px-3 py-2.5 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-accent-500/20 focus:border-accent-400 min-h-11;
+  }
+
+  .pill {
+    @apply text-xs px-3.5 py-2 rounded-full transition min-h-9 font-medium;
+  }
+
+  .pill-active {
+    @apply pill bg-ink text-surface-raised;
+  }
+
+  .pill-inactive {
+    @apply pill bg-surface-raised text-ink-secondary border border-ink-faint hover:border-stone-300 hover:text-ink;
+  }
+
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition min-h-11;
+  }
+
+  .nav-item-active {
+    @apply nav-item bg-surface-raised text-ink font-medium shadow-sm border border-ink-faint/50;
+  }
+
+  .nav-item-inactive {
+    @apply nav-item text-ink-secondary hover:text-ink hover:bg-surface-hover;
+  }
+}
+
+@layer utilities {
+  .pb-nav {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  @media (min-width: 768px) {
+    .pb-nav {
+      padding-bottom: 2.5rem;
+    }
+  }
+
+  .pb-nav-none {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

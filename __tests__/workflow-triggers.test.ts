@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { SUPPORTED_CONNECTORS } from '@/lib/connectors'
+import { SUPPORTED_CONNECTORS } from '@/lib/connectors/specs'
 import type { ConnectorType } from '@/types'
 
 const VALID_CONNECTOR_IDS: ConnectorType[] = ['salesforce', 'hubspot', 'netsuite', 'sap', 'zendesk']

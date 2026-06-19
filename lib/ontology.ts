@@ -43,6 +43,13 @@ export const ONBOARDING_QUESTIONS: OnboardingQuestion[] = [
     hint: 'e.g. Sales, Marketing, Engineering, Customer Success, Finance, Operations',
     required_for_kpis: [],
   },
+  {
+    id: 'q-saas-tools',
+    field: 'saas_connections',
+    question: 'Which SaaS tools does your business use for CRM, ERP, support, or finance?',
+    hint: 'e.g. Salesforce, HubSpot, NetSuite, SAP, Zendesk — list all that apply',
+    required_for_kpis: ['arr', 'customer-count', 'ticket-volume'],
+  },
 ]
 
 const FIELD_WEIGHTS: Record<string, number> = {
@@ -59,6 +66,13 @@ function isFieldComplete(ontology: Partial<Ontology>, field: string): boolean {
   if (Array.isArray(val)) return val.length > 0
   if (typeof val === 'object') return Object.keys(val as object).length > 0
   return false
+}
+
+function isQuestionAnswered(ontology: Partial<Ontology>, question: OnboardingQuestion): boolean {
+  if (question.field === 'departments') return (ontology.departments?.length ?? 0) > 0
+  if (question.field === 'saas_connections') return (ontology.saas_connections?.length ?? 0) > 0
+  const val = ontology[question.field] as Record<string, unknown> | undefined
+  return !!(val && question.id in val)
 }
 
 export function evaluateCompleteness(ontology: Partial<Ontology>): OntologyCompleteness {
@@ -95,7 +109,7 @@ export function getNextOnboardingQuestion(
   _role: UserRole,
 ): OnboardingQuestion | null {
   for (const q of ONBOARDING_QUESTIONS) {
-    if (!isFieldComplete(ontology, q.field)) return q
+    if (!isQuestionAnswered(ontology, q)) return q
   }
   return null
 }
@@ -113,6 +127,8 @@ export function applyOnboardingAnswer(
 
   if (field === 'departments') {
     updated.departments = answer.split(',').map(s => s.trim()).filter(Boolean)
+  } else if (field === 'saas_connections') {
+    updated.saas_connections = answer.split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
   } else if (field === 'customer_definition' || field === 'revenue_model' || field === 'cost_structure') {
     updated[field] = {
       ...(updated[field] as Record<string, unknown> ?? {}),

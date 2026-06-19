@@ -31,7 +31,10 @@ export async function POST(req: NextRequest) {
 
     if (orgErr || !org) {
       console.error('Failed to create organisation:', orgErr)
-      return NextResponse.json({ error: 'Failed to create organisation' }, { status: 500 })
+      const detail = orgErr?.message?.includes('fetch failed')
+        ? 'Database unreachable — check Supabase is running (npx supabase start) and .env.local credentials'
+        : orgErr?.message
+      return NextResponse.json({ error: 'Failed to create organisation', detail }, { status: 500 })
     }
 
     const { data: newUser, error: userErr } = await db

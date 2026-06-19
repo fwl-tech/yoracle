@@ -29,10 +29,22 @@ export async function generateInsights(
   const { getSupabaseClient } = await import('@/lib/supabase')
   const db = getSupabaseClient()
 
-  const [ontologyRes, snapshotsRes] = await Promise.all([
+  const [ontologyRes, connectorsRes] = await Promise.all([
     db.from('ontologies').select('*').eq('org_id', orgId).order('version', { ascending: false }).limit(1).single(),
-    db.from('data_snapshots').select('entity_type, raw_data').eq('connector_id', orgId).order('synced_at', { ascending: false }).limit(20),
+    db.from('connectors').select('id').eq('org_id', orgId),
   ])
+
+  const connectorIds = (connectorsRes.data ?? []).map(c => c.id)
+  let snapshotsRes: { data: Record<string, unknown>[] | null } = { data: [] }
+
+  if (connectorIds.length > 0) {
+    snapshotsRes = await db
+      .from('data_snapshots')
+      .select('entity_type, raw_data')
+      .in('connector_id', connectorIds)
+      .order('synced_at', { ascending: false })
+      .limit(20)
+  }
 
   if (!ontologyRes.data) return []
 

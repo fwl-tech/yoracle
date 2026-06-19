@@ -1,41 +1,38 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
+// Paths are relative to basePath (/apps/yoracle) — do NOT include the basePath prefix.
 const isPublic = createRouteMatcher([
-  '/apps/yoracle/health',
-  '/apps/yoracle/sign-in(.*)',
-  '/apps/yoracle/sign-up(.*)',
   '/health',
+  '/sign-in(.*)',
+  '/sign-up(.*)',
+  '/api/cron(.*)',
+  '/api/slack(.*)',
 ])
 
 const isAuthPage = createRouteMatcher([
-  '/apps/yoracle/sign-in(.*)',
-  '/apps/yoracle/sign-up(.*)',
+  '/sign-in(.*)',
+  '/sign-up(.*)',
 ])
 
-export default clerkMiddleware((auth, req) => {
-  // If the user is already authenticated and lands on a Clerk auth page,
-  // redirect them to the digest before the page renders. Without this,
-  // Clerk's server component calls Next.js redirect(signInFallbackRedirectUrl)
-  // which auto-prepends basePath and produces a double-prefix 500.
-  const { userId } = auth()
+export default clerkMiddleware(async (auth, req) => {
+  const { userId } = await auth()
   if (userId && isAuthPage(req)) {
     const url = req.nextUrl.clone()
-    url.pathname = '/apps/yoracle/digest'
+    url.pathname = '/digest'
     return NextResponse.redirect(url)
   }
 
   if (!isPublic(req)) {
-    auth.protect()
+    await auth.protect()
   }
   return NextResponse.next()
 })
 
 export const config = {
   matcher: [
-    '/apps/yoracle',
-    '/apps/yoracle/',
-    '/apps/yoracle/((?!_next/static|_next/image|favicon\.ico|.*\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|woff2?|ttf)).*)',
-    '/api/(.*)',
+    // Clerk default matcher — paths omit basePath (Next.js adds it automatically)
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    '/(api|trpc)(.*)',
   ],
 }

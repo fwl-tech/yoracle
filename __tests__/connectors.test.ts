@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { triggerWorkflowAction, SUPPORTED_CONNECTORS } from '@/lib/connectors'
+import { triggerWorkflowAction } from '@/lib/connectors'
+import { SUPPORTED_CONNECTORS } from '@/lib/connectors/specs'
 
 // Mock encrypt so we can control what auth config decrypts to
 vi.mock('@/lib/encrypt', () => ({

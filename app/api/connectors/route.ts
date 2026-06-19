@@ -39,6 +39,11 @@ export async function POST(req: NextRequest) {
     status: 'active',
   }).select('id, system_type, status, created_at').single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error || !data) return NextResponse.json({ error: error?.message ?? 'Insert failed' }, { status: 500 })
+
+  import('@/lib/connectors/sync').then(({ syncConnector }) => {
+    syncConnector(data.id).catch(console.error)
+  })
+
   return NextResponse.json({ connector: data }, { status: 201 })
 }

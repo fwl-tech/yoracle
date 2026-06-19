@@ -37,7 +37,8 @@ describe('streamChat', () => {
 
   it('yields text chunks from content_block_delta events', async () => {
     const Anthropic = (await import('@anthropic-ai/sdk')).default
-    vi.mocked(Anthropic).mockImplementation(() => ({
+    vi.mocked(Anthropic).mockImplementation(function () {
+      return {
       messages: {
         create: vi.fn(),
         stream: vi.fn().mockReturnValue({
@@ -48,7 +49,7 @@ describe('streamChat', () => {
           },
         }),
       },
-    }) as ReturnType<InstanceType<typeof Anthropic>['messages']['stream']>)
+    }})
 
     // Reset the singleton so the new mock is picked up
     vi.resetModules()
@@ -62,7 +63,8 @@ describe('streamChat', () => {
 
   it('skips non-text_delta chunks', async () => {
     const Anthropic = (await import('@anthropic-ai/sdk')).default
-    vi.mocked(Anthropic).mockImplementation(() => ({
+    vi.mocked(Anthropic).mockImplementation(function () {
+      return {
       messages: {
         create: vi.fn(),
         stream: vi.fn().mockReturnValue({
@@ -74,7 +76,7 @@ describe('streamChat', () => {
           },
         }),
       },
-    }) as ReturnType<InstanceType<typeof Anthropic>['messages']['stream']>)
+    }})
 
     vi.resetModules()
     const { streamChat } = await import('@/lib/ai')
@@ -88,9 +90,9 @@ describe('streamChat', () => {
   it('appends dataContext to user message when provided', async () => {
     const Anthropic = (await import('@anthropic-ai/sdk')).default
     const streamMock = vi.fn().mockReturnValue({ [Symbol.asyncIterator]: async function* () {} })
-    vi.mocked(Anthropic).mockImplementation(() => ({
-      messages: { create: vi.fn(), stream: streamMock },
-    }) as ReturnType<InstanceType<typeof Anthropic>['messages']['stream']>)
+    vi.mocked(Anthropic).mockImplementation(function () {
+      return { messages: { create: vi.fn(), stream: streamMock } }
+    })
 
     vi.resetModules()
     const { streamChat } = await import('@/lib/ai')
@@ -105,9 +107,9 @@ describe('streamChat', () => {
   it('does not append dataContext when not provided', async () => {
     const Anthropic = (await import('@anthropic-ai/sdk')).default
     const streamMock = vi.fn().mockReturnValue({ [Symbol.asyncIterator]: async function* () {} })
-    vi.mocked(Anthropic).mockImplementation(() => ({
-      messages: { create: vi.fn(), stream: streamMock },
-    }) as ReturnType<InstanceType<typeof Anthropic>['messages']['stream']>)
+    vi.mocked(Anthropic).mockImplementation(function () {
+      return { messages: { create: vi.fn(), stream: streamMock } }
+    })
 
     vi.resetModules()
     const { streamChat } = await import('@/lib/ai')
@@ -120,9 +122,9 @@ describe('streamChat', () => {
   it('truncates history to last 20 messages', async () => {
     const Anthropic = (await import('@anthropic-ai/sdk')).default
     const streamMock = vi.fn().mockReturnValue({ [Symbol.asyncIterator]: async function* () {} })
-    vi.mocked(Anthropic).mockImplementation(() => ({
-      messages: { create: vi.fn(), stream: streamMock },
-    }) as ReturnType<InstanceType<typeof Anthropic>['messages']['stream']>)
+    vi.mocked(Anthropic).mockImplementation(function () {
+      return { messages: { create: vi.fn(), stream: streamMock } }
+    })
 
     vi.resetModules()
     const { streamChat } = await import('@/lib/ai')
@@ -152,12 +154,13 @@ describe('generateInsightsForUser', () => {
   it('parses and returns JSON insights when content type is text', async () => {
     const mockInsights = [{ title: 'ARR growing', body: 'Up 20% QoQ', category: 'revenue', severity: 'info', metric_refs: [], suggested_actions: [] }]
     const Anthropic = (await import('@anthropic-ai/sdk')).default
-    vi.mocked(Anthropic).mockImplementation(() => ({
+    vi.mocked(Anthropic).mockImplementation(function () {
+      return {
       messages: {
         stream: vi.fn(),
         create: vi.fn().mockResolvedValue({ content: [{ type: 'text', text: JSON.stringify(mockInsights) }] }),
       },
-    }) as ReturnType<InstanceType<typeof Anthropic>['messages']['stream']>)
+    }})
 
     vi.resetModules()
     const { generateInsightsForUser } = await import('@/lib/ai')
@@ -167,12 +170,13 @@ describe('generateInsightsForUser', () => {
 
   it('returns empty array when content type is not text', async () => {
     const Anthropic = (await import('@anthropic-ai/sdk')).default
-    vi.mocked(Anthropic).mockImplementation(() => ({
+    vi.mocked(Anthropic).mockImplementation(function () {
+      return {
       messages: {
         stream: vi.fn(),
         create: vi.fn().mockResolvedValue({ content: [{ type: 'tool_use', id: 'tu1', name: 'fn', input: {} }] }),
       },
-    }) as ReturnType<InstanceType<typeof Anthropic>['messages']['stream']>)
+    }})
 
     vi.resetModules()
     const { generateInsightsForUser } = await import('@/lib/ai')

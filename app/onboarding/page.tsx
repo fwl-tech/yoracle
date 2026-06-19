@@ -69,13 +69,17 @@ export default function OnboardingPage() {
 
   if (!started) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="max-w-lg text-center space-y-6 px-6">
-          <div className="text-5xl">&#x1F52E;</div>
-          <h1 className="text-3xl font-bold text-white">Welcome to Yoracle</h1>
-          <p className="text-gray-400 text-lg">I'll ask you a few questions about your business to build your intelligence layer. Takes about 3 minutes.</p>
-          {error && <p className="text-red-400 text-sm">{error}</p>}
-          <button onClick={start} disabled={loading} className="bg-brand-500 hover:bg-brand-600 disabled:opacity-40 text-white px-8 py-3 rounded-lg font-medium text-lg transition">
+      <div className="min-h-dvh flex items-center justify-center bg-surface-base px-4 pb-safe">
+        <div className="max-w-lg text-center space-y-6 w-full">
+          <div className="w-14 h-14 rounded-2xl bg-ink flex items-center justify-center mx-auto font-heading text-2xl text-surface-raised font-medium">
+            Y
+          </div>
+          <h1 className="font-heading text-3xl sm:text-4xl font-medium text-ink tracking-tight">Welcome to Yoracle</h1>
+          <p className="text-ink-secondary text-base sm:text-lg leading-relaxed">
+            I&apos;ll ask you a few questions about your business to build your intelligence layer. Takes about 3 minutes.
+          </p>
+          {error && <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-xl px-4 py-2">{error}</p>}
+          <button onClick={start} disabled={loading} className="btn-primary text-base px-8 py-3 w-full sm:w-auto">
             {loading ? 'Setting up…' : 'Get started'}
           </button>
         </div>
@@ -85,13 +89,15 @@ export default function OnboardingPage() {
 
   if (done) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="max-w-lg text-center space-y-6 px-6">
-          <div className="text-5xl">&#x2728;</div>
-          <h1 className="text-3xl font-bold text-white">Your intelligence layer is ready</h1>
-          <p className="text-gray-400">Yoracle will now surface insights tailored to your role and business context.</p>
-          <a href={`${BASE}/digest`} className="inline-block bg-brand-500 hover:bg-brand-600 text-white px-8 py-3 rounded-lg font-medium text-lg transition">
-            See today's insights
+      <div className="min-h-dvh flex items-center justify-center bg-surface-base px-4 pb-safe">
+        <div className="max-w-lg text-center space-y-6 w-full">
+          <div className="w-14 h-14 rounded-2xl bg-accent-500 flex items-center justify-center mx-auto text-white text-2xl">
+            ✓
+          </div>
+          <h1 className="font-heading text-3xl sm:text-4xl font-medium text-ink tracking-tight">Your intelligence layer is ready</h1>
+          <p className="text-ink-secondary text-sm sm:text-base">Yoracle will now surface insights tailored to your role and business context.</p>
+          <a href={`${BASE}/digest`} className="inline-block btn-primary text-base px-8 py-3 w-full sm:w-auto">
+            See today&apos;s insights
           </a>
         </div>
       </div>
@@ -99,48 +105,43 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950 px-6">
-      <div className="w-full max-w-xl space-y-6">
+    <div className="min-h-dvh flex items-center justify-center bg-surface-base px-4 py-8 pb-safe">
+      <div className="w-full max-w-xl space-y-5 sm:space-y-6">
         <div className="space-y-2">
-          <div className="flex justify-between text-sm text-gray-400">
+          <div className="flex justify-between text-sm text-ink-secondary">
             <span>Building your intelligence layer</span>
-            <span>{Math.round(completionPct)}%</span>
+            <span className="font-medium text-ink">{Math.round(completionPct)}%</span>
           </div>
-          <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-            <div className="h-full bg-brand-500 rounded-full transition-all duration-500" style={{ width: `${completionPct}%` }} />
+          <div className="h-1.5 bg-surface-inset rounded-full overflow-hidden">
+            <div className="h-full bg-ink rounded-full transition-all duration-500" style={{ width: `${completionPct}%` }} />
           </div>
         </div>
 
         {error && (
-          <div className="bg-red-950/40 border border-red-800 rounded-xl px-4 py-3 text-red-400 text-sm">
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm">
             {error}
           </div>
         )}
 
         {currentQuestion && (
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 space-y-4">
-            <p className="text-xl font-medium text-white">{currentQuestion.question}</p>
-            <p className="text-sm text-gray-500">{currentQuestion.hint}</p>
+          <div className="card p-5 sm:p-8 space-y-4 shadow-card">
+            <p className="font-heading text-xl sm:text-2xl font-medium text-ink leading-snug">{currentQuestion.question}</p>
+            <p className="text-sm text-ink-muted">{currentQuestion.hint}</p>
             <textarea
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 resize-none focus:outline-none focus:border-brand-500 transition"
-              rows={3}
+              className="input-field resize-none"
+              rows={4}
               placeholder="Your answer…"
               value={answer}
               onChange={e => setAnswer(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && e.metaKey) submitAnswer() }}
             />
-            <button
-              onClick={submitAnswer}
-              disabled={loading || !answer.trim()}
-              className="w-full bg-brand-500 hover:bg-brand-600 disabled:opacity-40 text-white py-3 rounded-lg font-medium transition"
-            >
+            <button onClick={submitAnswer} disabled={loading || !answer.trim()} className="w-full btn-primary py-3">
               {loading ? 'Saving…' : 'Continue'}
             </button>
           </div>
         )}
 
         {!currentQuestion && !error && (
-          <div className="text-center text-gray-500 text-sm">Loading your first question…</div>
+          <div className="text-center text-ink-muted text-sm">Loading your first question…</div>
         )}
       </div>
     </div>
