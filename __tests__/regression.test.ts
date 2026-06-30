@@ -257,7 +257,7 @@ describe('Regression Test Suite', () => {
 
     it('all onboarding questions have valid fields', async () => {
       const { ONBOARDING_QUESTIONS } = await import('@/lib/ontology')
-      const validFields = ['customer_definition', 'revenue_model', 'cost_structure', 'departments']
+      const validFields = ['customer_definition', 'revenue_model', 'cost_structure', 'departments', 'saas_connections']
       
       for (const question of ONBOARDING_QUESTIONS) {
         expect(validFields).toContain(question.field)

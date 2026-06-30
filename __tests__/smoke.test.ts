@@ -100,7 +100,7 @@ describe('Smoke Tests - Critical Functionality', () => {
   describe('Ontology', () => {
     it('ONBOARDING_QUESTIONS has expected questions', async () => {
       const { ONBOARDING_QUESTIONS } = await import('@/lib/ontology')
-      expect(ONBOARDING_QUESTIONS.length).toBe(6)
+      expect(ONBOARDING_QUESTIONS.length).toBe(7)
     })
 
     it('applyOnboardingAnswer works for customer type', async () => {

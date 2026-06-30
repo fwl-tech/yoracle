@@ -30,16 +30,16 @@ describe('Middleware', () => {
     expect(middleware.config.matcher.length).toBeGreaterThan(0)
   })
 
-  it('config includes /api/(.*) pattern', async () => {
+  it('config includes API route matcher', async () => {
     const middleware = await import('@/middleware')
-    expect(middleware.config.matcher).toContain('/api/(.*)')
+    expect(middleware.config.matcher.some((p: string) => p.includes('api'))).toBe(true)
   })
 
-  it('config includes /apps/yoracle patterns', async () => {
+  it('matcher paths omit basePath prefix', async () => {
     const middleware = await import('@/middleware')
-    const hasYoraclePattern = middleware.config.matcher.some((pattern: string) => 
+    const hasYoraclePattern = middleware.config.matcher.some((pattern: string) =>
       pattern.includes('/apps/yoracle')
     )
-    expect(hasYoraclePattern).toBe(true)
+    expect(hasYoraclePattern).toBe(false)
   })
 })

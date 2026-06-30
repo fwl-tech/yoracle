@@ -57,6 +57,25 @@ else
     SET_COUNT=$((SET_COUNT + 1))
 fi
 
+# Clerk route URLs (defaults — not secrets)
+CLERK_URL_VARS=(
+    "NEXT_PUBLIC_CLERK_SIGN_IN_URL:/apps/yoracle/sign-in"
+    "NEXT_PUBLIC_CLERK_SIGN_UP_URL:/apps/yoracle/sign-up"
+)
+
+for entry in "${CLERK_URL_VARS[@]}"; do
+    var="${entry%%:*}"
+    default="${entry#*:}"
+    if check_variable "$var"; then
+        echo "✓ $var: [configured]"
+        EXISTING_COUNT=$((EXISTING_COUNT + 1))
+    else
+        echo "+ $var: Setting to $default"
+        set_variable "$var" "$default"
+        SET_COUNT=$((SET_COUNT + 1))
+    fi
+done
+
 # Check other required variables
 REQUIRED_VARS=(
     "NEXT_PUBLIC_SUPABASE_URL"

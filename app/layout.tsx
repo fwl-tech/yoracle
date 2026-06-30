@@ -42,8 +42,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <ClerkProvider
       signInUrl={`${BASE}/sign-in`}
       signUpUrl={`${BASE}/sign-up`}
-      signInFallbackRedirectUrl={`${BASE}/digest`}
-      signUpFallbackRedirectUrl={`${BASE}/onboarding`}
+      signInFallbackRedirectUrl="/digest"
+      signUpFallbackRedirectUrl="/onboarding"
     >
       <html lang="en">
         <body className={`${sans.variable} ${serif.variable} font-sans`}>

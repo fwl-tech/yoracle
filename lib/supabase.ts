@@ -10,6 +10,7 @@ type AnySupabaseClient = SupabaseClient<any, any, any>
 let client: AnySupabaseClient | null = null
 
 function shouldUseDevStore(): boolean {
+  if (process.env.NODE_ENV === 'production') return false
   if (process.env.USE_DEV_STORE === 'true') return true
   if (process.env.USE_SUPABASE === 'true') return false
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
