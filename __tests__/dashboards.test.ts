@@ -179,6 +179,7 @@ describe('getKpisForRole', () => {
     expect(ids).toContain('arpu')
     expect(ids).toContain('win-rate')
     expect(ids).toContain('customer-count')
+    expect(ids).toContain('mrr')
   })
 
   it('cfo gets financial KPIs', () => {

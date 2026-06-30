@@ -16,6 +16,10 @@ const isAuthPage = createRouteMatcher([
 ])
 
 export default clerkMiddleware(async (auth, req) => {
+  // If the user is already authenticated and lands on a Clerk auth page,
+  // redirect them to the digest before the page renders. Without this,
+  // Clerk's server component calls Next.js redirect(signInFallbackRedirectUrl)
+  // which auto-prepends basePath and produces a double-prefix 500.
   const { userId } = await auth()
   if (userId && isAuthPage(req)) {
     const url = req.nextUrl.clone()

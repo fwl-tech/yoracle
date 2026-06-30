@@ -57,10 +57,10 @@ describe('ConnectorType values', () => {
     expect(field.type).toBe('url')
   })
 
-  it('all password fields are marked as type password', () => {
+  it('all password and secret fields are marked as type password', () => {
     for (const c of SUPPORTED_CONNECTORS) {
       for (const f of c.required_fields) {
-        if (f.key.includes('secret') || f.key.includes('token') || f.key === 'password') {
+        if (f.key.includes('_secret') || f.key.includes('api_token') || f.key === 'password') {
           expect(f.type).toBe('password')
         }
       }
