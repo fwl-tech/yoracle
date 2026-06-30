@@ -5,8 +5,32 @@ on:
     branches: [main]
 
 jobs:
+  sync-secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger hatch-ai-provisioner to sync secrets
+        run: |
+          echo "🔄 Triggering hatch-ai-provisioner to sync secrets..."
+          curl -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.PROVISIONER_PAT }}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/fwl-tech/hatch-ai-provisioner/dispatches \
+            -d '{
+              "event_type": "provision-secrets",
+              "client_payload": {
+                "repository": "fwl-tech/yoracle",
+                "railway_service_id": "${{ secrets.RAILWAY_SERVICE_ID }}",
+                "railway_environment_id": "${{ secrets.RAILWAY_ENVIRONMENT_ID }}"
+              }
+            }' || echo "⚠️  Provisioner trigger failed, continuing with local secrets..."
+          
+          echo "Waiting 10 seconds for provisioner to sync secrets..."
+          sleep 10
+
   deploy:
     runs-on: ubuntu-latest
+    needs: sync-secrets
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
