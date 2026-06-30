@@ -61,6 +61,9 @@ fi
 CLERK_URL_VARS=(
     "NEXT_PUBLIC_CLERK_SIGN_IN_URL:/apps/yoracle/sign-in"
     "NEXT_PUBLIC_CLERK_SIGN_UP_URL:/apps/yoracle/sign-up"
+    "NEXT_PUBLIC_CLERK_PROXY_URL:/apps/yoracle/__clerk"
+    "NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL:/digest"
+    "NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL:/onboarding"
 )
 
 for entry in "${CLERK_URL_VARS[@]}"; do

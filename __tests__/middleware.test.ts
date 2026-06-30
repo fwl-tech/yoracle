@@ -35,11 +35,8 @@ describe('Middleware', () => {
     expect(middleware.config.matcher.some((p: string) => p.includes('api'))).toBe(true)
   })
 
-  it('matcher paths omit basePath prefix', async () => {
+  it('config includes Clerk FAPI proxy matcher', async () => {
     const middleware = await import('@/middleware')
-    const hasYoraclePattern = middleware.config.matcher.some((pattern: string) =>
-      pattern.includes('/apps/yoracle')
-    )
-    expect(hasYoraclePattern).toBe(false)
+    expect(middleware.config.matcher.some((p: string) => p.includes('__clerk'))).toBe(true)
   })
 })
