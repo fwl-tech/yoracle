@@ -2,8 +2,24 @@ import 'server-only'
 
 import type { NextRequest } from 'next/server'
 
-const FAPI_ORIGIN = 'https://frontend-api.clerk.dev'
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '/apps/yoracle'
+
+// The Frontend API host is instance-specific and encoded in the publishable
+// key itself (base64 of "<fapi-host>$") — it is NOT a fixed Clerk-wide host.
+// Hardcoding a generic host here silently sends every request to the wrong
+// Clerk instance, which Clerk rejects with a "host_invalid" error.
+function getFapiOrigin(): string {
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+  if (!publishableKey) {
+    throw new Error('Missing NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY')
+  }
+  const encoded = publishableKey.replace(/^pk_(test|live)_/, '')
+  const host = Buffer.from(encoded, 'base64').toString('utf-8').replace(/\$+$/, '')
+  if (!host) {
+    throw new Error('Unable to derive Frontend API host from NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY')
+  }
+  return `https://${host}`
+}
 
 export function clerkProxyUrl(req: NextRequest): string {
   const proto = req.headers.get('x-forwarded-proto') ?? 'https'
@@ -17,8 +33,15 @@ export async function proxyClerkFrontendApi(req: NextRequest, pathSegments: stri
     return new Response('Missing CLERK_SECRET_KEY', { status: 500 })
   }
 
+  let fapiOrigin: string
+  try {
+    fapiOrigin = getFapiOrigin()
+  } catch (err) {
+    return new Response(err instanceof Error ? err.message : 'Invalid Clerk publishable key', { status: 500 })
+  }
+
   const path = pathSegments.join('/')
-  const target = new URL(path, `${FAPI_ORIGIN}/`)
+  const target = new URL(path, `${fapiOrigin}/`)
   target.search = req.nextUrl.search
 
   const headers = new Headers(req.headers)
