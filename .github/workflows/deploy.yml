@@ -9,11 +9,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger hatch-ai-provisioner to sync secrets
+        env:
+          PROVISIONER_PAT: ${{ secrets.PROVISIONER_PAT }}
         run: |
+          set +e
           echo "🔄 Triggering hatch-ai-provisioner to sync secrets..."
-          curl -X POST \
+          SINCE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          HTTP_STATUS=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
             -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.PROVISIONER_PAT }}" \
+            -H "Authorization: Bearer $PROVISIONER_PAT" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             https://api.github.com/repos/fwl-tech/hatch-ai-provisioner/dispatches \
             -d '{
@@ -23,10 +27,35 @@ jobs:
                 "railway_service_id": "${{ secrets.RAILWAY_SERVICE_ID }}",
                 "railway_environment_id": "${{ secrets.RAILWAY_ENVIRONMENT_ID }}"
               }
-            }' || echo "⚠️  Provisioner trigger failed, continuing with local secrets..."
-          
-          echo "Waiting 10 seconds for provisioner to sync secrets..."
-          sleep 10
+            }')
+
+          if [ "$HTTP_STATUS" != "204" ]; then
+            echo "::warning::Provisioner trigger failed (HTTP $HTTP_STATUS), continuing with existing secrets"
+            exit 0
+          fi
+
+          echo "Waiting for hatch-ai-provisioner run to complete (up to 90s)..."
+          for i in $(seq 1 18); do
+            sleep 5
+            RUN_STATUS=$(curl -s \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer $PROVISIONER_PAT" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/fwl-tech/hatch-ai-provisioner/actions/runs?event=repository_dispatch&created=%3E%3D$SINCE&per_page=1" \
+              | jq -r '.workflow_runs[0].status // "unknown"' 2>/dev/null)
+            RUN_STATUS=${RUN_STATUS:-unknown}
+
+            if [ "$RUN_STATUS" = "completed" ]; then
+              echo "✅ Provisioner run completed"
+              exit 0
+            elif [ "$RUN_STATUS" = "unknown" ]; then
+              echo "⏳ No provisioner run visible yet, retrying..."
+            else
+              echo "⏳ Provisioner run status: $RUN_STATUS"
+            fi
+          done
+
+          echo "::warning::Timed out waiting for provisioner run to complete, continuing with existing secrets"
 
   deploy:
     runs-on: ubuntu-latest

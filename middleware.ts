@@ -18,7 +18,16 @@ const isAuthPage = createRouteMatcher([
   '/sign-up(.*)',
 ])
 
+function isClerkFapiPath(pathname: string): boolean {
+  return pathname === '/__clerk' || pathname.startsWith('/__clerk/') || pathname.endsWith('/__clerk') || pathname.includes('/__clerk/')
+}
+
 export default clerkMiddleware(async (auth, req) => {
+  // Clerk Frontend API proxy — must bypass auth.protect() (path may include basePath behind reverse proxies).
+  if (isClerkFapiPath(req.nextUrl.pathname)) {
+    return NextResponse.next()
+  }
+
   // If the user is already authenticated and lands on a Clerk auth page,
   // redirect them to the digest before the page renders. Without this,
   // Clerk's server component calls Next.js redirect(signInFallbackRedirectUrl)

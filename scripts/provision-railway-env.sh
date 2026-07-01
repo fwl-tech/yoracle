@@ -19,25 +19,30 @@ fi
 # Function to check if a variable exists in Railway
 check_variable() {
     local var_name=$1
-    local query='query { variables(serviceId: \"'$RAILWAY_SERVICE_ID'\", environmentId: \"'$RAILWAY_ENVIRONMENT_ID'\") { edges { node { name } } } }'
-    
+    local query='query($serviceId: String!, $environmentId: String!) { variables(serviceId: $serviceId, environmentId: $environmentId) { edges { node { name } } } }'
+    local payload
+    payload=$(jq -n --arg query "$query" --arg serviceId "$RAILWAY_SERVICE_ID" --arg environmentId "$RAILWAY_ENVIRONMENT_ID" \
+        '{query: $query, variables: {serviceId: $serviceId, environmentId: $environmentId}}')
+
     curl -s -X POST https://backboard.railway.app/graphql/v2 \
         -H "Authorization: Bearer $RAILWAY_TOKEN" \
         -H "Content-Type: application/json" \
-        -d "{\"query\": \"$query\"}" | grep -q "\"name\":\"$var_name\""
+        -d "$payload" | grep -q "\"name\":\"$var_name\""
 }
 
 # Function to set a Railway variable
 set_variable() {
     local var_name=$1
     local var_value=$2
-    
-    local mutation='mutation { variableUpsert(input: { serviceId: \"'$RAILWAY_SERVICE_ID'\", environmentId: \"'$RAILWAY_ENVIRONMENT_ID'\", name: \"'$var_name'\", value: \"'$var_value'\" }) { name } }'
-    
+    local mutation='mutation($serviceId: String!, $environmentId: String!, $name: String!, $value: String!) { variableUpsert(input: { serviceId: $serviceId, environmentId: $environmentId, name: $name, value: $value }) { name } }'
+    local payload
+    payload=$(jq -n --arg query "$mutation" --arg serviceId "$RAILWAY_SERVICE_ID" --arg environmentId "$RAILWAY_ENVIRONMENT_ID" --arg name "$var_name" --arg value "$var_value" \
+        '{query: $query, variables: {serviceId: $serviceId, environmentId: $environmentId, name: $name, value: $value}}')
+
     curl -s -X POST https://backboard.railway.app/graphql/v2 \
         -H "Authorization: Bearer $RAILWAY_TOKEN" \
         -H "Content-Type: application/json" \
-        -d "{\"query\": \"$mutation\"}" > /dev/null
+        -d "$payload" > /dev/null
 }
 
 echo "📋 Checking required environment variables..."
