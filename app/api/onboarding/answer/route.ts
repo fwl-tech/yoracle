@@ -1,4 +1,5 @@
-import { auth, currentUser } from '@clerk/nextjs/server'
+// import { auth, currentUser } from '@clerk/nextjs/server' // disabled — replaced with simple email/password auth
+import { auth } from '@/lib/simple-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseClient } from '@/lib/supabase'
 import { applyOnboardingAnswer, evaluateCompleteness, getNextOnboardingQuestion } from '@/lib/ontology'
@@ -19,9 +20,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const clerkUser = await currentUser()
-    const email = clerkUser?.emailAddresses[0]?.emailAddress ?? `${userId}@unknown.com`
-    const name = [clerkUser?.firstName, clerkUser?.lastName].filter(Boolean).join(' ') || email
+    // userId is the session subject, which is the user's email (see lib/simple-auth.ts).
+    // In practice this branch shouldn't trigger — /api/auth/signup creates the user record directly.
+    const email = userId
+    const name = email
 
     const { data: org, error: orgErr } = await db
       .from('organisations')

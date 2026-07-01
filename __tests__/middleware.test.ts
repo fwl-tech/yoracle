@@ -1,16 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-
-vi.mock('@clerk/nextjs/server', () => ({
-  clerkMiddleware: vi.fn((handler) => handler),
-  createRouteMatcher: vi.fn((paths) => (req: { url: string }) => {
-    const url = new URL(req.url)
-    return paths.some((path: string) => {
-      const pattern = path.replace('(.*)', '.*')
-      const regex = new RegExp(`^${pattern}$`)
-      return regex.test(url.pathname)
-    })
-  }),
-}))
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 describe('Middleware', () => {
   beforeEach(() => {
@@ -25,7 +13,6 @@ describe('Middleware', () => {
   it('config has correct matcher patterns', async () => {
     const middleware = await import('@/middleware')
     expect(middleware.config).toBeDefined()
-    expect(middleware.config.matcher).toBeDefined()
     expect(Array.isArray(middleware.config.matcher)).toBe(true)
     expect(middleware.config.matcher.length).toBeGreaterThan(0)
   })
@@ -33,10 +20,5 @@ describe('Middleware', () => {
   it('config includes API route matcher', async () => {
     const middleware = await import('@/middleware')
     expect(middleware.config.matcher.some((p: string) => p.includes('api'))).toBe(true)
-  })
-
-  it('config includes Clerk FAPI proxy matcher', async () => {
-    const middleware = await import('@/middleware')
-    expect(middleware.config.matcher.some((p: string) => p.includes('__clerk'))).toBe(true)
   })
 })

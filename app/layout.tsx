@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Source_Serif_4 } from 'next/font/google'
-import { ClerkProvider } from '@clerk/nextjs'
+// import { ClerkProvider } from '@clerk/nextjs' // disabled — replaced with simple email/password auth
 import './globals.css'
 
 export const dynamic = 'force-dynamic'
@@ -17,8 +17,6 @@ const serif = Source_Serif_4({
   variable: '--font-serif',
   weight: ['400', '500', '600'],
 })
-
-const BASE = '/apps/yoracle'
 
 export const metadata: Metadata = {
   title: 'Yoracle — Business Intelligence',
@@ -39,20 +37,20 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider
-      proxyUrl={`${BASE}/__clerk`}
-      signInUrl={`${BASE}/sign-in`}
-      signUpUrl={`${BASE}/sign-up`}
-      signInFallbackRedirectUrl="/digest"
-      signUpFallbackRedirectUrl="/onboarding"
-      afterSignInUrl="/digest"
-      afterSignUpUrl="/onboarding"
-    >
-      <html lang="en">
-        <body className={`${sans.variable} ${serif.variable} font-sans`}>
-          {children}
-        </body>
-      </html>
-    </ClerkProvider>
+    // <ClerkProvider
+    //   proxyUrl={`${BASE}/__clerk`}
+    //   signInUrl={`${BASE}/sign-in`}
+    //   signUpUrl={`${BASE}/sign-up`}
+    //   signInFallbackRedirectUrl="/digest"
+    //   signUpFallbackRedirectUrl="/onboarding"
+    //   afterSignInUrl="/digest"
+    //   afterSignUpUrl="/onboarding"
+    // >
+    <html lang="en">
+      <body className={`${sans.variable} ${serif.variable} font-sans`}>
+        {children}
+      </body>
+    </html>
+    // </ClerkProvider>
   )
 }

@@ -35,20 +35,14 @@ const REQUIRED_ENV_VARS: EnvironmentVariable[] = [
     secret: false,
   },
   
-  // Clerk Authentication
+  // Simple email/password auth
   {
-    key: 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY',
+    key: 'AUTH_SESSION_SECRET',
     required: true,
-    description: 'Clerk publishable key',
-    secret: false,
-  },
-  {
-    key: 'CLERK_SECRET_KEY',
-    required: true,
-    description: 'Clerk secret key',
+    description: 'Session cookie signing secret (32+ random chars)',
     secret: true,
   },
-  
+
   // AI & Encryption
   {
     key: 'ANTHROPIC_API_KEY',

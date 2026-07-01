@@ -1,4 +1,5 @@
-import { auth } from '@clerk/nextjs/server'
+// import { auth } from '@clerk/nextjs/server' // disabled — replaced with simple email/password auth
+import { auth } from '@/lib/simple-auth'
 import { NextResponse } from 'next/server'
 import { getSupabaseClient } from '@/lib/supabase'
 import { getDashboardsForRole } from '@/lib/dashboards'

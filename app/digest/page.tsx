@@ -1,4 +1,5 @@
-import { auth } from '@clerk/nextjs/server'
+// import { auth } from '@clerk/nextjs/server' // disabled — replaced with simple email/password auth
+import { auth } from '@/lib/simple-auth'
 import { redirect } from 'next/navigation'
 import AppShell from '@/components/AppShell'
 import DigestClient from '@/components/DigestClient'

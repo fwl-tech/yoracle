@@ -1,14 +1,9 @@
-import { auth } from '@clerk/nextjs/server'
+// import { auth } from '@clerk/nextjs/server' // disabled — replaced with simple email/password auth
+import { auth } from '@/lib/simple-auth'
 import { redirect } from 'next/navigation'
 
 export default async function Home() {
-  let userId: string | null = null
-  try {
-    const session = await auth()
-    userId = session.userId
-  } catch {
-    // auth() throws if clerkMiddleware didn't run — treat as unauthenticated
-  }
+  const { userId } = await auth()
 
   if (!userId) redirect('/sign-in')
 

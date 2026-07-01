@@ -62,14 +62,8 @@ else
     SET_COUNT=$((SET_COUNT + 1))
 fi
 
-# Clerk route URLs (defaults — not secrets)
-CLERK_URL_VARS=(
-    "NEXT_PUBLIC_CLERK_SIGN_IN_URL:/apps/yoracle/sign-in"
-    "NEXT_PUBLIC_CLERK_SIGN_UP_URL:/apps/yoracle/sign-up"
-    "NEXT_PUBLIC_CLERK_PROXY_URL:/apps/yoracle/__clerk"
-    "NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL:/digest"
-    "NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL:/onboarding"
-)
+# Clerk route URLs (disabled — replaced with simple email/password auth)
+CLERK_URL_VARS=()
 
 for entry in "${CLERK_URL_VARS[@]}"; do
     var="${entry%%:*}"
@@ -89,8 +83,7 @@ REQUIRED_VARS=(
     "NEXT_PUBLIC_SUPABASE_URL"
     "SUPABASE_SERVICE_ROLE_KEY"
     "NEXT_PUBLIC_SUPABASE_ANON_KEY"
-    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"
-    "CLERK_SECRET_KEY"
+    "AUTH_SESSION_SECRET"
     "ANTHROPIC_API_KEY"
     "CONNECTOR_ENCRYPTION_KEY"
 )

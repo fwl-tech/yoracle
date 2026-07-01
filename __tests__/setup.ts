@@ -50,12 +50,21 @@ vi.mock('@/lib/supabase', () => ({
   getSupabaseClientForUser: vi.fn(),
 }))
 
-// Mock Clerk
+// Mock Clerk (disabled — kept only for __tests__/provisioning.test.ts which no longer imports it)
 vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(() => ({ userId: 'user_test123', orgId: 'org_test123' })),
   currentUser: vi.fn(() => ({ id: 'user_test123', emailAddresses: [{ emailAddress: 'test@example.com' }] })),
   clerkMiddleware: vi.fn(),
   createRouteMatcher: vi.fn(() => vi.fn(() => false)),
+}))
+
+// Mock simple email/password auth session
+vi.mock('@/lib/simple-auth', () => ({
+  auth: vi.fn(() => ({ userId: 'user_test123' })),
+  createSessionToken: vi.fn(() => Promise.resolve('test-session-token')),
+  verifySessionToken: vi.fn(() => Promise.resolve('user_test123')),
+  SESSION_COOKIE_NAME: 'yoracle_session',
+  SESSION_TTL_MS: 30 * 24 * 60 * 60 * 1000,
 }))
 
 // Mock Anthropic SDK — must use function/class for `new Anthropic()` in vitest 4
